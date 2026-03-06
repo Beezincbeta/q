@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موسوعة الاختبارات الذكية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+        :root { --primary: #6366f1; --secondary: #a855f7; --success: #10b981; --error: #ef4444; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #0f172a;
+            background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%), radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0, transparent 50%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center; color: #f8fafc;
+        }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; }
+        .option-btn { transition: all 0.2s; border: 2px solid transparent; }
+        .option-btn:hover:not(:disabled) { transform: scale(1.02); background: rgba(255, 255, 255, 0.1); border-color: var(--primary); }
+        .option-btn.correct { background: var(--success) !important; border-color: var(--success); color: white; }
+        .option-btn.incorrect { background: var(--error) !important; border-color: var(--error); color: white; }
+        .progress-bar { height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.4s ease; }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="app" class="w-full max-w-xl px-4"></div>
+
+    <script>
+        const BASE_URL = '/';
+        const topics = [
+            { id: 'history.json', name: 'التاريخ' },
+            { id: 'geography.json', name: 'الجغرافيا' },
+            { id: 'science.json', name: 'العلوم' },
+            { id: 'mathematics.json', name: 'الرياضيات' },
+            { id: 'general.json', name: 'عام' },
+            { id: 'medicine.json', name: 'طب' },
+            { id: 'arlang.json', name: 'لغات' },
+            { id: 'sports.json', name: 'رياضة' },
+            { id: 'technology.json', name: 'تكنولوجيا' },
+            { id: 'arts.json', name: 'فنون وثقافات' },
+            { id: 'religion.json', name: 'اديان' },
+            { id: 'economy.json', name: 'اقتصاد' },
+            { id: 'dailylife.json', name: 'الحياة اليومية' },
+            { id: 'animals.json', name: 'مملكة الغابة' },
+            { id: 'brain.json', name: 'العاب العقل' },
+            { id: 'arabicquiz.json', name: 'اختبارات عربية' }
+        ];
+
+        let state = {
+            questions: [],
+            currentIndex: 0,
+            score: 0,
+            showResult: false,
+            feedback: null,
+            selectedQuestions: [],
+            currentOptions: [],
+            quizStarted: false,
+            isLoading: false,
+            currentTopic: topics[0].id
+        };
+
+        function shuffle(array) { return array.sort(() => Math.random() - 0.5); }
+
+        async function fetchQuestions(topicId) {
+            state.isLoading = true;
+            render();
+            try {
+                const response = await fetch(BASE_URL + topicId);
+                const data = await response.json();
+                state.questions = Array.isArray(data) ? data : (data.questions || []);
+            } catch (err) {
+                console.error("Error fetching questions:", err);
+                state.questions = [];
+            } finally {
+                state.isLoading = false;
+                render();
+            }
+        }
+
+        window.startQuiz = () => {
+            if (state.questions.length === 0) return;
+            const input = document.getElementById('numInput');
+            const count = Math.min(parseInt(input.value) || 5, state.questions.length);
+            state.selectedQuestions = shuffle([...state.questions]).slice(0, count);
+            state.quizStarted = true;
+            state.currentIndex = 0;
+            state.score = 0;
+            state.showResult = false;
+            state.feedback = null;
+            prepareQuestion();
+            render();
+        };
+
+        function prepareQuestion() {
+            if (state.selectedQuestions[state.currentIndex]) {
+                state.currentOptions = shuffle([...state.selectedQuestions[state.currentIndex].options]);
+            }
+        }
+
+        window.handleSelect = (option) => {
+            if (state.feedback) return;
+            const currentQ = state.selectedQuestions[state.currentIndex];
+            const isCorrect = option === currentQ.correctAnswer;
+            if (isCorrect) state.score++;
+            state.feedback = { isCorrect, selected: option };
+            render();
+        };
+
+        window.nextStep = () => {
+            if (state.currentIndex + 1 < state.selectedQuestions.length) {
+                state.currentIndex++;
+                state.feedback = null;
+                prepareQuestion();
+            } else {
+                state.showResult = true;
+            }
+            render();
+        };
+
+        window.changeTopic = (e) => {
+            state.currentTopic = e.target.value;
+            fetchQuestions(state.currentTopic);
+        };
+
+        window.restart = () => {
+            state.quizStarted = false;
+            state.showResult = false;
+            render();
+        };
+
+        function render() {
+            const root = document.getElementById('app');
+            if (state.isLoading) {
+                root.innerHTML = `<div class="glass-card p-12 flex flex-col items-center"><div class="spinner mb-4"></div><p>جاري تحميل الأسئلة...</p></div>`;
+                return;
+            }
+
+            if (!state.quizStarted) {
+                root.innerHTML = `
+                    <div class="glass-card p-8 fade-in text-center">
+                        <div class="mb-8">
+                            <span class="text-5xl mb-4 block">📚</span>
+                            <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">اختر موضوعك المفضل</h1>
+                        </div>
+                        <div class="space-y-4 text-right">
+                            <div>
+                                <label class="block text-sm mb-2 text-slate-300">اختر القسم:</label>
+                                <select onchange="changeTopic(event)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                    ${topics.map(t => `<option value="${t.id}" ${state.currentTopic === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2 text-slate-300">عدد الأسئلة (المتوفر: ${state.questions.length}):</label>
+                                <input type="number" id="numInput" value="10" min="1" max="${state.questions.length}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <button onclick="startQuiz()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">ابدأ التحدي</button>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            if (state.showResult) {
+                const percent = Math.round((state.score / state.selectedQuestions.length) * 100);
+                root.innerHTML = `
+                    <div class="glass-card p-10 text-center fade-in">
+                        <h2 class="text-2xl font-bold mb-4">انتهى الاختبار! 🏁</h2>
+                        <div class="text-5xl font-bold text-indigo-400 mb-4">${percent}%</div>
+                        <p class="text-xl mb-6">لقد أجبت على ${state.score} من أصل ${state.selectedQuestions.length}</p>
+                        <button onclick="restart()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all">العودة للرئيسية</button>
+                    </div>`;
+                return;
+            }
+
+            const q = state.selectedQuestions[state.currentIndex];
+            const progress = ((state.currentIndex) / state.selectedQuestions.length) * 100;
+
+            root.innerHTML = `
+                <div class="glass-card p-6 md:p-8 fade-in">
+                    <div class="flex justify-between items-center mb-6 text-sm text-slate-400">
+                        <span>السؤال ${state.currentIndex + 1} / ${state.selectedQuestions.length}</span>
+                        <span class="bg-indigo-500/20 text-indigo-400 px-3 py-1 rounded-full font-bold">النقاط: ${state.score}</span>
+                    </div>
+                    <div class="progress-bar mb-8"><div class="progress-fill" style="width: ${progress}%"></div></div>
+                    <h2 class="text-xl font-bold mb-8 leading-relaxed">${q.question}</h2>
+                    <div class="grid gap-3">
+                        ${state.currentOptions.map(opt => {
+                            let cls = '';
+                            if (state.feedback) {
+                                if (opt === q.correctAnswer) cls = 'correct';
+                                else if (opt === state.feedback.selected) cls = 'incorrect';
+                                else cls = 'opacity-40';
+                            }
+                            return `<button onclick="handleSelect('${opt}')" ${state.feedback ? 'disabled' : ''} class="option-btn w-full p-4 rounded-xl text-right bg-slate-800/50 flex justify-between items-center ${cls}"><span>${opt}</span></button>`;
+                        }).join('')}
+                    </div>
+                    ${state.feedback ? `<div class="mt-8"><button onclick="nextStep()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl">التالي</button></div>` : ''}
+                </div>`;
+        }
+
+        fetchQuestions(state.currentTopic);
+    </script>
+</body>
+</html>
