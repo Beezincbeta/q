@@ -33,16 +33,47 @@
         }
 
         .option-btn { 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             border: 1px solid rgba(255, 255, 255, 0.1);
-            min-height: 60px;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            position: relative;
+            overflow: hidden;
         }
 
-        .option-btn:active { transform: scale(0.98); }
+        .option-btn:active:not(:disabled) { transform: scale(0.97); }
 
-        .option-btn.correct { background: var(--success) !important; border-color: var(--success); color: white; }
-        .option-btn.incorrect { background: var(--error) !important; border-color: var(--error); color: white; }
+        .option-btn.correct { 
+            background: var(--success) !important; 
+            border-color: #34d399; 
+            color: white;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            animation: pulse-success 0.5s ease;
+        }
+
+        .option-btn.incorrect { 
+            background: var(--error) !important; 
+            border-color: #f87171; 
+            color: white;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            animation: shake 0.4s ease;
+        }
         
+        @keyframes pulse-success {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
         .progress-bar { height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.4s ease; }
         
@@ -58,6 +89,23 @@
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
+        .settings-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        .settings-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 
@@ -66,6 +114,62 @@
 </head>
 <body>
     <div id="app" class="w-full max-w-md px-4 py-6"></div>
+
+    <!-- نافذة الإعدادات -->
+    <div id="settingsModal" class="settings-modal px-4">
+        <div class="glass-card p-6 w-full max-w-sm fade-in shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">إعدادات اللعبة</h3>
+                <button onclick="toggleSettings()" class="text-slate-400 hover:text-white p-2">✕</button>
+            </div>
+            
+            <div class="space-y-4 text-right">
+                <!-- إعداد المؤقت -->
+                <div class="flex items-center justify-between bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">⏱️</span>
+                        <div>
+                            <p class="font-bold text-sm">مؤقت السؤال</p>
+                            <p class="text-[10px] text-slate-400">تحديد وقت لكل سؤال</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="timerToggle" class="sr-only peer" onchange="updateSettings()">
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                <div id="timerSetting" class="hidden pr-2">
+                    <label class="block text-xs font-bold mb-2 text-slate-400 mr-1">وقت السؤال (ثانية)</label>
+                    <input type="number" id="timerValue" min="5" max="60" value="15" oninput="updateSettings()"
+                        class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-3 text-white outline-none">
+                </div>
+
+                <!-- إعداد إظهار الإجابة الصحيحة -->
+                <div class="flex items-center justify-between bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">👁️</span>
+                        <div>
+                            <p class="font-bold text-sm">إظهار الإجابة</p>
+                            <p class="text-[10px] text-slate-400">كشف الإجابة الصحيحة فوراً</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="showCorrectToggle" class="sr-only peer" onchange="updateSettings()">
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                <div class="pt-4 border-t border-slate-700/50">
+                    <button onclick="clearAllData()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold py-3 rounded-2xl transition-all">
+                        🗑️ مسح كل التقدم والبيانات
+                    </button>
+                </div>
+            </div>
+            
+            <button onclick="toggleSettings()" class="w-full mt-6 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-2xl transition-all">تأكيد الإعدادات</button>
+        </div>
+    </div>
 
     <script>
         const BASE_URL = './'; 
@@ -102,7 +206,10 @@
             isLoading: false,
             fetchError: false,
             currentTopicId: localStorage.getItem('quiz_last_topic') || topics[0].id,
-            hasSavedProgress: !!localStorage.getItem('quiz_saved_progress')
+            hasSavedProgress: !!localStorage.getItem('quiz_saved_progress'),
+            settings: JSON.parse(localStorage.getItem('quiz_settings')) || { useTimer: false, timerSeconds: 15, showCorrect: false },
+            timeLeft: 0,
+            timerId: null
         };
 
         function shuffle(array) { 
@@ -140,6 +247,31 @@
         window.updateName = (name) => {
             state.playerName = name;
             localStorage.setItem('quiz_player_name', name);
+        };
+
+        window.toggleSettings = () => {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.toggle('active');
+            
+            document.getElementById('timerToggle').checked = state.settings.useTimer;
+            document.getElementById('showCorrectToggle').checked = state.settings.showCorrect;
+            document.getElementById('timerValue').value = state.settings.timerSeconds;
+            document.getElementById('timerSetting').style.display = state.settings.useTimer ? 'block' : 'none';
+        };
+
+        window.updateSettings = () => {
+            state.settings.useTimer = document.getElementById('timerToggle').checked;
+            state.settings.showCorrect = document.getElementById('showCorrectToggle').checked;
+            state.settings.timerSeconds = parseInt(document.getElementById('timerValue').value) || 15;
+            document.getElementById('timerSetting').style.display = state.settings.useTimer ? 'block' : 'none';
+            localStorage.setItem('quiz_settings', JSON.stringify(state.settings));
+        };
+
+        window.clearAllData = () => {
+            if(confirm("هل أنت متأكد من حذف كافة البيانات والنتائج؟")) {
+                localStorage.clear();
+                location.reload();
+            }
         };
 
         window.saveProgress = () => {
@@ -197,14 +329,35 @@
             render();
         };
 
+        function startTimer() {
+            if (!state.settings.useTimer) return;
+            clearInterval(state.timerId);
+            state.timeLeft = state.settings.timerSeconds;
+            state.timerId = setInterval(() => {
+                state.timeLeft--;
+                const timerEl = document.getElementById('timerDisplay');
+                if (timerEl) {
+                    timerEl.innerText = state.timeLeft;
+                    if (state.timeLeft <= 5) timerEl.classList.add('text-red-500');
+                }
+                
+                if (state.timeLeft <= 0) {
+                    clearInterval(state.timerId);
+                    handleSelect(null);
+                }
+            }, 1000);
+        }
+
         function prepareQuestion() {
             if (state.selectedQuestions[state.currentIndex]) {
                 state.currentOptions = shuffle([...state.selectedQuestions[state.currentIndex].options]);
+                startTimer();
             }
         }
 
         window.handleSelect = (option) => {
             if (state.feedback) return;
+            clearInterval(state.timerId);
             const currentQ = state.selectedQuestions[state.currentIndex];
             const isCorrect = option === currentQ.correctAnswer;
             if (isCorrect) state.score++;
@@ -251,7 +404,14 @@
 
             if (!state.quizStarted) {
                 root.innerHTML = `
-                    <div class="glass-card p-6 md:p-8 fade-in text-center">
+                    <div class="glass-card p-6 md:p-8 fade-in text-center relative overflow-hidden">
+                        <button onclick="toggleSettings()" class="absolute top-4 left-4 text-slate-500 hover:text-indigo-400 transition-colors p-2 rounded-xl hover:bg-white/5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                        
                         <div class="mb-6">
                             <span class="text-6xl mb-4 block">🏆</span>
                             <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">تحدي المعرفة</h1>
@@ -260,13 +420,13 @@
 
                         <div class="space-y-5 text-right">
                             <div>
-                                <label class="block text-xs font-bold mb-2 text-slate-400 mr-1">اسم اللاعب</label>
+                                <label class="block text-xs font-bold mb-2 text-slate-400 mr-1 uppercase">اسم اللاعب</label>
                                 <input type="text" oninput="updateName(this.value)" value="${state.playerName}" placeholder="أدخل اسمك..." 
                                     class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-4 text-white outline-none focus:ring-2 focus:ring-indigo-500">
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold mb-2 text-slate-400 mr-1">الموضوع</label>
+                                <label class="block text-xs font-bold mb-2 text-slate-400 mr-1 uppercase">الموضوع</label>
                                 <div class="relative">
                                     <select onchange="changeTopic(event)" class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-4 text-white outline-none appearance-none">
                                         ${topics.map(t => `<option value="${t.id}" ${state.currentTopicId === t.id ? 'selected' : ''}>${t.icon} ${t.name}</option>`).join('')}
@@ -277,7 +437,7 @@
 
                             <div class="grid grid-cols-2 gap-3">
                                 <div class="col-span-2 sm:col-span-1">
-                                    <label class="block text-xs font-bold mb-2 text-slate-400 mr-1">العدد <span class="text-indigo-400 text-[10px] font-bold mr-1">(المتاح: ${state.questions.length})</span></label>
+                                    <label class="block text-xs font-bold mb-2 text-slate-400 mr-1 uppercase">العدد <span class="text-indigo-400 text-[10px] font-bold mr-1">(المتاح: ${state.questions.length})</span></label>
                                     <input type="number" id="numInput" value="${Math.min(10, state.questions.length || 10)}" min="1" max="${state.questions.length || 10}" 
                                         class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-4 text-center text-white font-bold outline-none">
                                 </div>
@@ -304,7 +464,7 @@
                         <div class="bg-slate-800/50 rounded-2xl p-4 mb-8">
                             <p class="text-slate-300 text-sm">أصبت في <span class="text-white font-bold">${state.score}</span> من ${state.selectedQuestions.length}</p>
                         </div>
-                        <button onclick="restart()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95">تحدي جديد</button>
+                        <button onclick="restart()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg">تحدي جديد</button>
                     </div>`;
                 return;
             }
@@ -314,30 +474,50 @@
 
             root.innerHTML = `
                 <div class="glass-card p-6 fade-in flex flex-col min-h-[500px]">
-                    <div class="flex justify-between items-center mb-4 text-[10px] font-bold text-slate-400">
+                    <div class="flex justify-between items-center mb-4 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
                         <span>سؤال ${state.currentIndex + 1} / ${state.selectedQuestions.length}</span>
-                        <span class="text-indigo-400 underline">${state.playerName}</span>
+                        ${state.settings.useTimer && !state.feedback ? `
+                            <span class="bg-slate-800 px-3 py-1 rounded-full text-indigo-400 font-mono">⏱️ <span id="timerDisplay">${state.timeLeft}</span></span>
+                        ` : ''}
                         <span>النقاط: ${state.score}</span>
                     </div>
                     <div class="progress-bar mb-6"><div class="progress-fill" style="width: ${progress}%"></div></div>
                     <div class="flex-1">
-                        <h2 class="text-lg font-bold mb-8 text-right">${q.question}</h2>
-                        <div class="grid gap-3 mb-6">
+                        <h2 class="text-lg font-bold mb-8 text-right leading-relaxed">${q.question}</h2>
+                        <div class="grid gap-4 mb-6">
                             ${state.currentOptions.map(opt => {
                                 let cls = '';
-                                if (state.feedback) {
-                                    if (opt === q.correctAnswer) cls = 'correct';
-                                    else if (opt === state.feedback.selected) cls = 'incorrect';
-                                    else cls = 'opacity-30';
+                                let icon = '';
+                                
+                                // منطق تحديد الأيقونة واللون
+                                if (state.feedback || state.settings.showCorrect) {
+                                    if (opt === q.correctAnswer) {
+                                        cls = 'correct';
+                                        icon = '<span class="text-xl fade-in">✅</span>';
+                                    } else if (state.feedback && opt === state.feedback.selected) {
+                                        cls = 'incorrect';
+                                        icon = '<span class="text-xl fade-in">❌</span>';
+                                    } else if (state.feedback) {
+                                        cls = 'opacity-30 scale-95';
+                                    }
                                 }
-                                return `<button onclick="handleSelect('${opt.replace(/'/g, "\\'")}')" ${state.feedback ? 'disabled' : ''} class="option-btn w-full p-4 rounded-2xl text-right bg-slate-800/40 text-sm font-medium ${cls}">${opt}</button>`;
+
+                                return `
+                                    <button 
+                                        onclick="handleSelect('${opt.replace(/'/g, "\\'")}')" 
+                                        ${state.feedback ? 'disabled' : ''} 
+                                        class="option-btn w-full rounded-2xl bg-slate-800/40 text-sm font-bold ${cls}"
+                                    >
+                                        <span class="flex-1">${opt}</span>
+                                        ${icon}
+                                    </button>`;
                             }).join('')}
                         </div>
                     </div>
                     ${state.feedback ? `
                         <div class="mt-4 pt-4 border-t border-slate-700/50 fade-in">
                             <button onclick="nextStep()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95">
-                                ${state.currentIndex + 1 === state.selectedQuestions.length ? 'النتائج النهائية' : 'السؤال التالي'}
+                                ${state.currentIndex + 1 === state.selectedQuestions.length ? 'انتهى الاختبار - عرض النتائج' : 'السؤال التالي ⬅️'}
                             </button>
                         </div>
                     ` : ''}
