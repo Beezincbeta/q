@@ -110,6 +110,23 @@
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 
         input, select { -webkit-appearance: none; }
+
+        /* تجميل شريط مستوى الصوت */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.1);
+            height: 6px;
+            border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -123,7 +140,7 @@
                 <button onclick="toggleSettings()" class="text-slate-400 hover:text-white p-2">✕</button>
             </div>
             
-            <div class="space-y-4 text-right">
+            <div class="space-y-4 text-right max-h-[70vh] overflow-y-auto pr-1">
                 <!-- إعداد المؤقت -->
                 <div class="flex items-center justify-between bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
                     <div class="flex items-center gap-3">
@@ -143,6 +160,31 @@
                     <label class="block text-xs font-bold mb-2 text-slate-400 mr-1">وقت السؤال (ثانية)</label>
                     <input type="number" id="timerValue" min="5" max="60" value="15" oninput="updateSettings()"
                         class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-3 text-white outline-none">
+                </div>
+
+                <!-- إعداد الصوت -->
+                <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl" id="soundIcon">🔊</span>
+                            <div>
+                                <p class="font-bold text-sm">المؤثرات الصوتية</p>
+                                <p class="text-[10px] text-slate-400">تشغيل أو إيقاف الأصوات</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="soundToggle" class="sr-only peer" onchange="updateSettings()">
+                            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        </label>
+                    </div>
+                    <div id="volumeSetting" class="pt-2 px-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] text-slate-500">منخفض</span>
+                            <span class="text-[10px] text-slate-500">مرتفع</span>
+                        </div>
+                        <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5" 
+                               class="w-full cursor-pointer" oninput="updateSettings()">
+                    </div>
                 </div>
 
                 <!-- إعداد إظهار الإجابة الصحيحة -->
@@ -172,6 +214,22 @@
     </div>
 
     <script>
+        // الأصوات
+        const sounds = {
+            correct: new Audio('./correct.mp3'),
+            wrong: new Audio('./wrong.mp3'),
+            click: new Audio('./click.mp3'),
+            timeout: new Audio('./timeout.mp3')
+        };
+
+        const playSound = (type) => {
+            if (state.settings.soundEnabled && sounds[type]) {
+                sounds[type].currentTime = 0;
+                sounds[type].volume = state.settings.volume;
+                sounds[type].play().catch(e => console.log('Audio error:', e));
+            }
+        };
+
         const BASE_URL = './'; 
         const topics = [
             { id: 'history.json', name: 'التاريخ', icon: '📜' },
@@ -207,7 +265,13 @@
             fetchError: false,
             currentTopicId: localStorage.getItem('quiz_last_topic') || topics[0].id,
             hasSavedProgress: !!localStorage.getItem('quiz_saved_progress'),
-            settings: JSON.parse(localStorage.getItem('quiz_settings')) || { useTimer: false, timerSeconds: 15, showCorrect: false },
+            settings: JSON.parse(localStorage.getItem('quiz_settings')) || { 
+                useTimer: false, 
+                timerSeconds: 15, 
+                showCorrect: false,
+                soundEnabled: true,
+                volume: 0.5
+            },
             timeLeft: 0,
             timerId: null
         };
@@ -250,20 +314,32 @@
         };
 
         window.toggleSettings = () => {
+            playSound('click');
             const modal = document.getElementById('settingsModal');
             modal.classList.toggle('active');
             
             document.getElementById('timerToggle').checked = state.settings.useTimer;
             document.getElementById('showCorrectToggle').checked = state.settings.showCorrect;
             document.getElementById('timerValue').value = state.settings.timerSeconds;
+            document.getElementById('soundToggle').checked = state.settings.soundEnabled;
+            document.getElementById('volumeControl').value = state.settings.volume;
+            
             document.getElementById('timerSetting').style.display = state.settings.useTimer ? 'block' : 'none';
+            document.getElementById('volumeSetting').style.opacity = state.settings.soundEnabled ? '1' : '0.5';
+            document.getElementById('soundIcon').innerText = state.settings.soundEnabled ? (state.settings.volume > 0.5 ? '🔊' : '🔉') : '🔇';
         };
 
         window.updateSettings = () => {
             state.settings.useTimer = document.getElementById('timerToggle').checked;
             state.settings.showCorrect = document.getElementById('showCorrectToggle').checked;
             state.settings.timerSeconds = parseInt(document.getElementById('timerValue').value) || 15;
+            state.settings.soundEnabled = document.getElementById('soundToggle').checked;
+            state.settings.volume = parseFloat(document.getElementById('volumeControl').value);
+            
             document.getElementById('timerSetting').style.display = state.settings.useTimer ? 'block' : 'none';
+            document.getElementById('volumeSetting').style.opacity = state.settings.soundEnabled ? '1' : '0.5';
+            document.getElementById('soundIcon').innerText = state.settings.soundEnabled ? (state.settings.volume > 0.5 ? '🔊' : '🔉') : '🔇';
+            
             localStorage.setItem('quiz_settings', JSON.stringify(state.settings));
         };
 
@@ -293,6 +369,7 @@
         };
 
         window.resumeQuiz = () => {
+            playSound('click');
             const saved = localStorage.getItem('quiz_saved_progress');
             if (saved) {
                 const data = JSON.parse(saved);
@@ -316,6 +393,7 @@
                 return;
             }
             
+            playSound('click');
             const input = document.getElementById('numInput');
             const count = Math.min(parseInt(input.value) || 10, state.questions.length);
             state.selectedQuestions = shuffle([...state.questions]).slice(0, count);
@@ -343,6 +421,7 @@
                 
                 if (state.timeLeft <= 0) {
                     clearInterval(state.timerId);
+                    playSound('timeout');
                     handleSelect(null);
                 }
             }, 1000);
@@ -360,13 +439,21 @@
             clearInterval(state.timerId);
             const currentQ = state.selectedQuestions[state.currentIndex];
             const isCorrect = option === currentQ.correctAnswer;
-            if (isCorrect) state.score++;
+            
+            if (isCorrect) {
+                state.score++;
+                playSound('correct');
+            } else {
+                playSound('wrong');
+            }
+
             state.feedback = { isCorrect, selected: option };
             window.saveProgress();
             render();
         };
 
         window.nextStep = () => {
+            playSound('click');
             if (state.currentIndex + 1 < state.selectedQuestions.length) {
                 state.currentIndex++;
                 state.feedback = null;
@@ -384,10 +471,12 @@
         };
 
         window.changeTopic = (e) => {
+            playSound('click');
             fetchQuestions(e.target.value);
         };
 
         window.restart = () => {
+            playSound('click');
             state.quizStarted = false;
             state.showResult = false;
             state.hasSavedProgress = !!localStorage.getItem('quiz_saved_progress');
@@ -489,7 +578,6 @@
                                 let cls = '';
                                 let icon = '';
                                 
-                                // منطق تحديد الأيقونة واللون
                                 if (state.feedback || state.settings.showCorrect) {
                                     if (opt === q.correctAnswer) {
                                         cls = 'correct';
