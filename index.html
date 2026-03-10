@@ -24,7 +24,6 @@
             overflow-x: hidden;
         }
 
-        /* Mobile Optimized Card */
         .glass-card { 
             background: rgba(30, 41, 59, 0.8); 
             backdrop-filter: blur(16px); 
@@ -59,7 +58,6 @@
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Custom scrollbar for mobile */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 
@@ -103,7 +101,8 @@
             quizStarted: false,
             isLoading: false,
             fetchError: false,
-            currentTopicId: localStorage.getItem('quiz_last_topic') || topics[0].id
+            currentTopicId: localStorage.getItem('quiz_last_topic') || topics[0].id,
+            hasSavedProgress: !!localStorage.getItem('quiz_saved_progress')
         };
 
         function shuffle(array) { 
@@ -119,11 +118,10 @@
             
             try {
                 const response = await fetch(BASE_URL + topicId);
-                if (!response.ok) throw new Error("Local file not found, falling back to GitHub");
+                if (!response.ok) throw new Error("Local file not found");
                 const data = await response.json();
                 state.questions = Array.isArray(data) ? data : (data.questions || []);
             } catch (err) {
-                console.warn("Local fetch failed, trying remote...", err);
                 try {
                     const remoteUrl = 'https://raw.githubusercontent.com/beezincbeta/q/refs/heads/main/' + topicId;
                     const response = await fetch(remoteUrl);
@@ -144,11 +142,43 @@
             localStorage.setItem('quiz_player_name', name);
         };
 
-        window.startQuiz = () => {
-            if (state.questions.length === 0) {
-                alert("لم يتم العثور على أسئلة لهذا الموضوع حالياً.");
-                return;
+        window.saveProgress = () => {
+            if (state.quizStarted && !state.showResult) {
+                const data = {
+                    topicId: state.currentTopicId,
+                    currentIndex: state.currentIndex,
+                    score: state.score,
+                    selectedQuestions: state.selectedQuestions,
+                    playerName: state.playerName
+                };
+                localStorage.setItem('quiz_saved_progress', JSON.stringify(data));
             }
+        };
+
+        window.clearSavedProgress = () => {
+            localStorage.removeItem('quiz_saved_progress');
+            state.hasSavedProgress = false;
+        };
+
+        window.resumeQuiz = () => {
+            const saved = localStorage.getItem('quiz_saved_progress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                state.currentTopicId = data.topicId;
+                state.currentIndex = data.currentIndex;
+                state.score = data.score;
+                state.selectedQuestions = data.selectedQuestions;
+                state.playerName = data.playerName;
+                state.quizStarted = true;
+                state.showResult = false;
+                state.feedback = null;
+                prepareQuestion();
+                render();
+            }
+        };
+
+        window.startQuiz = () => {
+            if (state.questions.length === 0) return;
             if (!state.playerName.trim()) {
                 alert("يرجى إدخال اسمك أولاً");
                 return;
@@ -162,6 +192,7 @@
             state.score = 0;
             state.showResult = false;
             state.feedback = null;
+            window.clearSavedProgress();
             prepareQuestion();
             render();
         };
@@ -178,6 +209,7 @@
             const isCorrect = option === currentQ.correctAnswer;
             if (isCorrect) state.score++;
             state.feedback = { isCorrect, selected: option };
+            window.saveProgress();
             render();
         };
 
@@ -185,9 +217,11 @@
             if (state.currentIndex + 1 < state.selectedQuestions.length) {
                 state.currentIndex++;
                 state.feedback = null;
+                window.saveProgress();
                 prepareQuestion();
             } else {
                 state.showResult = true;
+                window.clearSavedProgress();
                 if (state.score > state.highScore) {
                     state.highScore = state.score;
                     localStorage.setItem('quiz_high_score', state.highScore);
@@ -203,6 +237,7 @@
         window.restart = () => {
             state.quizStarted = false;
             state.showResult = false;
+            state.hasSavedProgress = !!localStorage.getItem('quiz_saved_progress');
             render();
         };
 
@@ -210,35 +245,30 @@
             const root = document.getElementById('app');
             
             if (state.isLoading) {
-                root.innerHTML = `
-                    <div class="glass-card p-12 flex flex-col items-center">
-                        <div class="spinner mb-4"></div>
-                        <p>جاري تحميل الأسئلة...</p>
-                    </div>`;
+                root.innerHTML = `<div class="glass-card p-12 flex flex-col items-center"><div class="spinner mb-4"></div><p>جاري التحميل...</p></div>`;
                 return;
             }
 
             if (!state.quizStarted) {
-                const currentTopicName = topics.find(t => t.id === state.currentTopicId)?.name || '';
                 root.innerHTML = `
                     <div class="glass-card p-6 md:p-8 fade-in text-center">
                         <div class="mb-6">
                             <span class="text-6xl mb-4 block">🏆</span>
                             <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">تحدي المعرفة</h1>
-                            ${state.highScore > 0 ? `<p class="text-xs text-indigo-300 mt-2 font-bold uppercase tracking-widest">أعلى نتيجة لك: ${state.highScore} نقطة</p>` : ''}
+                            ${state.highScore > 0 ? `<p class="text-xs text-indigo-300 mt-2 font-bold uppercase tracking-widest">أعلى نتيجة: ${state.highScore}</p>` : ''}
                         </div>
 
                         <div class="space-y-5 text-right">
                             <div>
-                                <label class="block text-xs font-bold mb-2 text-slate-400 mr-1 uppercase">اسم اللاعب</label>
-                                <input type="text" oninput="updateName(this.value)" value="${state.playerName}" placeholder="أدخل اسمك هنا..." 
-                                    class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-4 text-white outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                                <label class="block text-xs font-bold mb-2 text-slate-400 mr-1">اسم اللاعب</label>
+                                <input type="text" oninput="updateName(this.value)" value="${state.playerName}" placeholder="أدخل اسمك..." 
+                                    class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-4 text-white outline-none focus:ring-2 focus:ring-indigo-500">
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold mb-2 text-slate-400 mr-1 uppercase">الموضوع</label>
+                                <label class="block text-xs font-bold mb-2 text-slate-400 mr-1">الموضوع</label>
                                 <div class="relative">
-                                    <select onchange="changeTopic(event)" class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-4 text-white outline-none focus:ring-2 focus:ring-indigo-500 appearance-none">
+                                    <select onchange="changeTopic(event)" class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-4 text-white outline-none appearance-none">
                                         ${topics.map(t => `<option value="${t.id}" ${state.currentTopicId === t.id ? 'selected' : ''}>${t.icon} ${t.name}</option>`).join('')}
                                     </select>
                                     <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
@@ -246,28 +276,21 @@
                             </div>
 
                             <div class="grid grid-cols-2 gap-3">
-                                <div class="col-span-2 md:col-span-1">
-                                    <label class="block text-xs font-bold mb-2 text-slate-400 mr-1 uppercase">
-                                        عدد الأسئلة <span class="text-indigo-400 text-[12px] font-normal font-bold mr-1">(المتاح: ${state.questions.length})</span>
-                                    </label>
+                                <div class="col-span-2 sm:col-span-1">
+                                    <label class="block text-xs font-bold mb-2 text-slate-400 mr-1">العدد <span class="text-indigo-400 text-[10px] font-bold mr-1">(المتاح: ${state.questions.length})</span></label>
                                     <input type="number" id="numInput" value="${Math.min(10, state.questions.length || 10)}" min="1" max="${state.questions.length || 10}" 
-                                        class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-4 text-center text-white font-bold outline-none focus:ring-2 focus:ring-indigo-500"
-                                        ${state.questions.length === 0 ? 'disabled' : ''}>
+                                        class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl px-5 py-4 text-center text-white font-bold outline-none">
                                 </div>
-                                <div class="col-span-2 md:col-span-1 flex items-end">
-                                    <button onclick="startQuiz()" 
-                                        class="w-full ${state.questions.length === 0 ? 'bg-slate-600 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500'} text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95"
-                                        ${state.questions.length === 0 ? 'disabled' : ''}>
-                                        بدء التحدي
-                                    </button>
+                                <div class="col-span-2 sm:col-span-1 flex gap-2 items-end">
+                                    <button onclick="startQuiz()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg">بدء</button>
+                                    ${state.hasSavedProgress ? `
+                                        <button onclick="resumeQuiz()" title="استئناف اللعب السابق" class="bg-amber-500 hover:bg-amber-400 text-white px-4 rounded-2xl transition-all active:scale-95 shadow-lg flex items-center justify-center">
+                                            <span class="text-xl">🕒</span>
+                                        </button>
+                                    ` : ''}
                                 </div>
                             </div>
-                            
-                            ${state.fetchError ? `<p class="text-xs text-red-400 mt-2 text-center">خطأ في جلب الأسئلة. يرجى التأكد من اتصالك أو تغيير الموضوع.</p>` : ''}
-                            ${!state.fetchError && state.questions.length === 0 ? `<p class="text-xs text-yellow-400 mt-2 text-center">لا توجد أسئلة متاحة في هذا الموضوع حالياً.</p>` : ''}
                         </div>
-                        
-                        <p class="mt-6 text-[10px] text-slate-500 uppercase tracking-widest">تلقائي: يتم حفظ تقدمك على هذا الجهاز</p>
                     </div>`;
                 return;
             }
@@ -276,13 +299,12 @@
                 const percent = Math.round((state.score / state.selectedQuestions.length) * 100);
                 root.innerHTML = `
                     <div class="glass-card p-8 text-center fade-in">
-                        <h2 class="text-xl font-bold mb-2">انتهى الاختبار، ${state.playerName}! 🏁</h2>
+                        <h2 class="text-xl font-bold mb-2">انتهيت يا ${state.playerName}!</h2>
                         <div class="text-6xl font-bold text-indigo-400 my-6">${percent}%</div>
                         <div class="bg-slate-800/50 rounded-2xl p-4 mb-8">
-                            <p class="text-slate-300 text-sm">لقد حققت <span class="text-white font-bold">${state.score}</span> إجابة صحيحة</p>
-                            <p class="text-slate-500 text-xs mt-1">من أصل ${state.selectedQuestions.length} سؤال</p>
+                            <p class="text-slate-300 text-sm">أصبت في <span class="text-white font-bold">${state.score}</span> من ${state.selectedQuestions.length}</p>
                         </div>
-                        <button onclick="restart()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg active:scale-95">تحدي جديد</button>
+                        <button onclick="restart()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95">تحدي جديد</button>
                     </div>`;
                 return;
             }
@@ -290,47 +312,28 @@
             const q = state.selectedQuestions[state.currentIndex];
             const progress = ((state.currentIndex) / state.selectedQuestions.length) * 100;
 
-            let optionsHtml = state.currentOptions.map(opt => {
-                let cls = '';
-                let icon = '';
-                if (state.feedback) {
-                    if (opt === q.correctAnswer) {
-                        cls = 'correct';
-                        icon = '✔️';
-                    } else if (opt === state.feedback.selected) {
-                        cls = 'incorrect';
-                        icon = '❌';
-                    } else {
-                        cls = 'opacity-30';
-                    }
-                }
-                return `
-                    <button onclick="handleSelect('${opt.replace(/'/g, "\\'")}')" ${state.feedback ? 'disabled' : ''} 
-                        class="option-btn w-full p-4 rounded-2xl text-right bg-slate-800/40 flex justify-between items-center ${cls}">
-                        <span class="text-sm font-medium leading-tight">${opt}</span>
-                        <span class="text-xs">${icon}</span>
-                    </button>`;
-            }).join('');
-
             root.innerHTML = `
                 <div class="glass-card p-6 fade-in flex flex-col min-h-[500px]">
-                    <div class="flex justify-between items-center mb-4 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                    <div class="flex justify-between items-center mb-4 text-[10px] font-bold text-slate-400">
                         <span>سؤال ${state.currentIndex + 1} / ${state.selectedQuestions.length}</span>
                         <span class="text-indigo-400 underline">${state.playerName}</span>
                         <span>النقاط: ${state.score}</span>
                     </div>
-                    
-                    <div class="progress-bar mb-6">
-                        <div class="progress-fill" style="width: ${progress}%"></div>
-                    </div>
-                    
+                    <div class="progress-bar mb-6"><div class="progress-fill" style="width: ${progress}%"></div></div>
                     <div class="flex-1">
-                        <h2 class="text-lg md:text-xl font-bold mb-8 leading-snug text-right">${q.question}</h2>
+                        <h2 class="text-lg font-bold mb-8 text-right">${q.question}</h2>
                         <div class="grid gap-3 mb-6">
-                            ${optionsHtml}
+                            ${state.currentOptions.map(opt => {
+                                let cls = '';
+                                if (state.feedback) {
+                                    if (opt === q.correctAnswer) cls = 'correct';
+                                    else if (opt === state.feedback.selected) cls = 'incorrect';
+                                    else cls = 'opacity-30';
+                                }
+                                return `<button onclick="handleSelect('${opt.replace(/'/g, "\\'")}')" ${state.feedback ? 'disabled' : ''} class="option-btn w-full p-4 rounded-2xl text-right bg-slate-800/40 text-sm font-medium ${cls}">${opt}</button>`;
+                            }).join('')}
                         </div>
                     </div>
-
                     ${state.feedback ? `
                         <div class="mt-4 pt-4 border-t border-slate-700/50 fade-in">
                             <button onclick="nextStep()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95">
