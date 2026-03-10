@@ -111,7 +111,6 @@
 
         input, select { -webkit-appearance: none; }
 
-        /* تجميل شريط مستوى الصوت */
         input[type=range] {
             -webkit-appearance: none;
             background: rgba(255,255,255,0.1);
@@ -214,7 +213,7 @@
     </div>
 
     <script>
-        // الأصوات
+        // الأصوات مع إدارة التداخل
         const sounds = {
             correct: new Audio('./correct.mp3'),
             wrong: new Audio('./wrong.mp3'),
@@ -222,9 +221,21 @@
             timeout: new Audio('./timeout.mp3')
         };
 
+        const sounds = {};
+        Object.keys(audioAssets).forEach(key => {
+            sounds[key] = new Audio(audioAssets[key]);
+        });
+
+        const stopAllSounds = () => {
+            Object.values(sounds).forEach(s => {
+                s.pause();
+                s.currentTime = 0;
+            });
+        };
+
         const playSound = (type) => {
             if (state.settings.soundEnabled && sounds[type]) {
-                sounds[type].currentTime = 0;
+                stopAllSounds(); // إيقاف أي صوت حالي لمنع التداخل
                 sounds[type].volume = state.settings.volume;
                 sounds[type].play().catch(e => console.log('Audio error:', e));
             }
@@ -421,8 +432,8 @@
                 
                 if (state.timeLeft <= 0) {
                     clearInterval(state.timerId);
-                    playSound('timeout');
-                    handleSelect(null);
+                    // عند نفاذ الوقت، نشغل صوت نفاذ الوقت فقط ونظهر النتيجة
+                    handleSelect(null, true);
                 }
             }, 1000);
         }
@@ -434,20 +445,22 @@
             }
         }
 
-        window.handleSelect = (option) => {
+        window.handleSelect = (option, isTimeout = false) => {
             if (state.feedback) return;
             clearInterval(state.timerId);
             const currentQ = state.selectedQuestions[state.currentIndex];
             const isCorrect = option === currentQ.correctAnswer;
             
-            if (isCorrect) {
+            if (isTimeout) {
+                playSound('timeout');
+            } else if (isCorrect) {
                 state.score++;
                 playSound('correct');
             } else {
                 playSound('wrong');
             }
 
-            state.feedback = { isCorrect, selected: option };
+            state.feedback = { isCorrect, selected: option, timedOut: isTimeout };
             window.saveProgress();
             render();
         };
@@ -578,6 +591,7 @@
                                 let cls = '';
                                 let icon = '';
                                 
+                                // إظهار الحالة (إما بسبب التغذية الراجعة بعد الاختيار أو بسبب إعداد "إظهار الإجابة")
                                 if (state.feedback || state.settings.showCorrect) {
                                     if (opt === q.correctAnswer) {
                                         cls = 'correct';
@@ -604,6 +618,7 @@
                     </div>
                     ${state.feedback ? `
                         <div class="mt-4 pt-4 border-t border-slate-700/50 fade-in">
+                            ${state.feedback.timedOut ? '<p class="text-center text-red-400 font-bold mb-4 animate-bounce">⚠️ انتهى الوقت!</p>' : ''}
                             <button onclick="nextStep()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95">
                                 ${state.currentIndex + 1 === state.selectedQuestions.length ? 'انتهى الاختبار - عرض النتائج' : 'السؤال التالي ⬅️'}
                             </button>
