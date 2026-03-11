@@ -2,10 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>موسوعة الاختبارات الذكية</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
@@ -20,8 +19,8 @@
             font-family: 'Tajawal', sans-serif;
             background: var(--bg-dark);
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 40%);
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 40%);
             min-height: 100vh;
             color: #f8fafc;
             margin: 0;
@@ -29,96 +28,101 @@
             align-items: center;
             justify-content: center;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(24px);
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 32px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 28px;
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         .nav-bar {
-            background: rgba(255, 255, 255, 0.05);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1.25rem 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-radius: 32px 32px 0 0;
+            border-radius: 28px 28px 0 0;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+            box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.4);
         }
-        .btn-primary:active { transform: scale(0.95); }
+        .btn-primary:active { transform: scale(0.96); opacity: 0.9; }
 
         .option-card {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.2s ease;
-            position: relative;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .option-card:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(-4px);
         }
 
         .option-card.correct {
             background: #10b981 !important;
             border-color: #34d399;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            color: white;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
         }
         .option-card.incorrect {
             background: #ef4444 !important;
             border-color: #f87171;
+            color: white;
         }
 
         .progress-track {
             height: 6px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
+            overflow: hidden;
         }
         .progress-thumb {
             height: 100%;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
-            border-radius: 10px;
-            transition: width 0.5s ease;
+            transition: width 0.4s cubic-bezier(0.65, 0, 0.35, 1);
         }
 
+        .animate-up { 
+            animation: slideUp 0.35s ease-out forwards; 
+        }
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-up { animation: slideUp 0.4s ease-out forwards; }
 
         .overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
+            background: rgba(2, 6, 23, 0.8);
+            backdrop-filter: blur(8px);
             z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: grid;
+            place-items: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.25s ease;
         }
         .overlay.active { opacity: 1; pointer-events: auto; }
 
-        .stat-badge {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 10px;
-            border-radius: 20px;
-        }
-
-        /* Custom Switch */
         .switch {
             position: relative;
             display: inline-block;
-            width: 44px;
-            height: 24px;
+            width: 40px;
+            height: 22px;
         }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
@@ -126,45 +130,49 @@
             cursor: pointer;
             inset: 0;
             background-color: rgba(255,255,255,0.1);
-            transition: .4s;
-            border-radius: 24px;
+            transition: .3s;
+            border-radius: 22px;
         }
         .slider:before {
             position: absolute;
             content: "";
-            height: 18px;
-            width: 18px;
+            height: 16px;
+            width: 16px;
             left: 3px;
             bottom: 3px;
             background-color: white;
-            transition: .4s;
+            transition: .3s;
             border-radius: 50%;
         }
         input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
 </head>
 <body>
-    <div id="app" class="w-full max-w-md px-4 py-8"></div>
+    <div id="app" class="w-full max-w-md px-4 py-6 md:py-10"></div>
 
     <!-- Settings Modal -->
     <div id="settingsModal" class="overlay px-4">
-        <div class="glass-panel p-8 w-full max-w-sm animate-up border-white/20">
-            <div class="flex justify-between items-center mb-8">
+        <div class="glass-panel p-6 w-full max-w-sm border-white/10">
+            <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-2">
                     <i data-lucide="settings-2" class="w-5 h-5 text-indigo-400"></i>
-                    <h3 class="text-xl font-extrabold">إعدادات اللعبة</h3>
+                    <h3 class="text-lg font-bold">الإعدادات</h3>
                 </div>
-                <button onclick="toggleSettings()" class="text-slate-400 p-2 hover:bg-white/5 rounded-full transition-colors">
+                <button onclick="toggleSettings()" class="text-slate-400 p-2 hover:bg-white/5 rounded-full">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
             
-            <div class="space-y-5 text-right">
-                <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+            <div class="space-y-4 text-right">
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
                     <div class="flex items-center gap-3">
-                        <i data-lucide="timer" class="w-5 h-5 text-indigo-400"></i>
-                        <span class="font-bold text-sm">مؤقت التحدي</span>
+                        <i data-lucide="timer" class="w-4 h-4 text-indigo-400"></i>
+                        <span class="text-sm">مؤقت السؤال</span>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="timerToggle" onchange="updateSettings()">
@@ -172,17 +180,17 @@
                     </label>
                 </div>
 
-                <div id="timerInputArea" class="hidden animate-up">
-                    <div class="flex items-center gap-2 bg-white/5 p-3 rounded-xl">
-                        <span class="text-xs text-slate-400 flex-1">الثواني:</span>
-                        <input type="number" id="timerValue" min="5" max="60" oninput="updateSettings()" class="w-20 bg-transparent text-center font-bold text-indigo-400 focus:outline-none">
+                <div id="timerInputArea" class="hidden">
+                    <div class="flex items-center gap-2 bg-white/5 p-2 px-4 rounded-xl border border-white/5">
+                        <span class="text-[10px] text-slate-400 flex-1">الثواني لكل سؤال:</span>
+                        <input type="number" id="timerValue" min="5" max="60" oninput="updateSettings()" class="w-12 bg-transparent text-center font-bold text-indigo-400 focus:outline-none">
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
                     <div class="flex items-center gap-3">
-                        <i data-lucide="eye" class="w-5 h-5 text-emerald-400"></i>
-                        <span class="font-bold text-sm">زر كشف الإجابة</span>
+                        <i data-lucide="eye" class="w-4 h-4 text-emerald-400"></i>
+                        <span class="text-sm">زر كشف الإجابة</span>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="revealToggle" onchange="updateSettings()">
@@ -190,22 +198,23 @@
                     </label>
                 </div>
 
-                <div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                <div class="p-3 bg-white/5 rounded-2xl border border-white/5 space-y-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="volume-2" class="w-5 h-5 text-indigo-400"></i>
-                            <span class="font-bold text-sm">المؤثرات الصوتية</span>
+                            <i data-lucide="volume-2" class="w-4 h-4 text-indigo-400"></i>
+                            <span class="text-sm">الصوت</span>
                         </div>
                         <label class="switch">
                             <input type="checkbox" id="soundToggle" onchange="updateSettings()">
                             <span class="slider"></span>
                         </label>
                     </div>
-                    <input type="range" id="volumeControl" min="0" max="1" step="0.1" oninput="updateSettings()" class="w-full accent-indigo-500 bg-white/10 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    <input type="range" id="volumeControl" min="0" max="1" step="0.1" oninput="updateSettings()" class="w-full accent-indigo-500 bg-white/10 h-1 rounded-lg appearance-none cursor-pointer">
                 </div>
 
-                <button onclick="showAlert('confirmation')" class="w-full py-4 text-red-400 border border-red-500/20 rounded-2xl text-xs font-bold bg-red-500/5 hover:bg-red-500/10 transition-colors">
-                    مسح كافة البيانات وإعادة الضبط
+                <button onclick="showAlert('confirmation')" class="w-full py-3 text-red-400 border border-red-500/10 rounded-xl text-[10px] font-bold bg-red-500/5 hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    إعادة تعيين كافة البيانات
                 </button>
             </div>
         </div>
@@ -213,22 +222,47 @@
 
     <!-- Alert Modal -->
     <div id="customAlert" class="overlay px-4">
-        <div class="glass-panel p-8 w-full max-w-sm text-center animate-up border-indigo-500/30">
-            <div id="alertIcon" class="text-5xl mb-4">⚠️</div>
-            <h3 id="alertTitle" class="text-xl font-bold mb-2">تنبيه</h3>
-            <p id="alertMessage" class="text-slate-400 mb-8 text-sm leading-relaxed"></p>
-            <div id="alertActions" class="flex gap-3">
-                <button onclick="closeAlert()" class="flex-1 bg-white/10 py-3 rounded-2xl font-bold text-sm">إلغاء</button>
+        <div class="glass-panel p-8 w-full max-w-sm text-center border-indigo-500/20">
+            <div id="alertIcon" class="text-4xl mb-3">⚠️</div>
+            <h3 id="alertTitle" class="text-lg font-bold mb-1">تنبيه</h3>
+            <p id="alertMessage" class="text-slate-400 mb-6 text-xs leading-relaxed"></p>
+            <div id="alertActions" class="flex gap-2">
+                <button onclick="closeAlert()" class="flex-1 bg-white/5 py-3 rounded-xl font-bold text-xs">إلغاء</button>
             </div>
         </div>
     </div>
 
     <script>
-        const sounds = {
-            correct: new Audio('https://raw.githubusercontent.com/beezincbeta/q/refs/heads/main/correct.mp3'),
-            wrong: new Audio('https://raw.githubusercontent.com/beezincbeta/q/refs/heads/main/wrong.mp3'),
-            click: new Audio('https://raw.githubusercontent.com/beezincbeta/q/refs/heads/main/click.mp3'),
-            timeout: new Audio('https://raw.githubusercontent.com/beezincbeta/q/refs/heads/main/timeout.mp3')
+        const audioSystem = {
+            initialized: false,
+            pool: {},
+            urls: {
+                correct: 'https://raw.githubusercontent.com/beezincbeta/q/refs/heads/main/correct.mp3',
+                wrong: 'https://raw.githubusercontent.com/beezincbeta/q/refs/heads/main/wrong.mp3',
+                click: 'https://raw.githubusercontent.com/beezincbeta/q/refs/heads/main/click.mp3',
+                timeout: 'https://raw.githubusercontent.com/beezincbeta/q/refs/heads/main/timeout.mp3'
+            },
+            init() {
+                if (this.initialized) return;
+                Object.keys(this.urls).forEach(key => {
+                    const audio = new Audio();
+                    audio.src = this.urls[key];
+                    audio.preload = 'auto';
+                    audio.load();
+                    this.pool[key] = audio;
+                });
+                this.initialized = true;
+            },
+            play(type, volume = 0.5) {
+                if (!state.settings.soundEnabled) return;
+                if (!this.initialized) this.init();
+                const sfx = this.pool[type];
+                if (sfx) {
+                    const playInstance = sfx.cloneNode();
+                    playInstance.volume = volume;
+                    playInstance.play().catch(e => console.log('Audio blocked', e));
+                }
+            }
         };
 
         const topics = [
@@ -267,7 +301,6 @@
             timeLeft: 0,
             timerId: null,
             revealed: false,
-            // زر الكشف مطفي افتراضياً
             settings: JSON.parse(localStorage.getItem('settings')) || {
                 useTimer: false,
                 timerSeconds: 15,
@@ -277,15 +310,8 @@
             }
         };
 
-        function playSfx(type) {
-            if (state.settings.soundEnabled) {
-                sounds[type].volume = state.settings.volume;
-                sounds[type].currentTime = 0;
-                sounds[type].play().catch(() => {});
-            }
-        }
-
-        async function fetchQuestions(topicId) {
+        const fetchQuestions = async (topicId) => {
+            if (state.isLoading) return;
             state.isLoading = true;
             state.currentTopicId = topicId;
             localStorage.setItem('last_topic', topicId);
@@ -300,23 +326,29 @@
                 state.isLoading = false;
                 render();
             }
-        }
+        };
 
         window.startQuiz = () => {
             if (!state.playerName.trim()) return showAlert('nameRequired');
-            playSfx('click');
-            const countInput = document.getElementById('numInput');
-            const max = state.questions.length;
-            let count = parseInt(countInput?.value) || 10;
-            
-            if (count > max) count = max;
-            if (count < 1) count = 1;
+            audioSystem.init();
+            audioSystem.play('click', state.settings.volume);
 
-            state.selectedQuestions = [...state.questions].sort(() => 0.5 - Math.random()).slice(0, count);
+            const countInput = document.getElementById('numInput');
+            let count = parseInt(countInput?.value) || 10;
+            const max = state.questions.length;
+            count = Math.max(1, Math.min(count, max));
+
+            state.selectedQuestions = state.questions
+                .map(value => ({ value, sort: Math.random() }))
+                .sort((a, b) => a.sort - b.sort)
+                .map(({ value }) => value)
+                .slice(0, count);
+
             state.quizStarted = true;
             state.currentIndex = 0;
             state.score = 0;
             state.showResult = false;
+            state.feedback = null;
             localStorage.removeItem('saved_progress');
             prepareQuestion();
             render();
@@ -326,24 +358,35 @@
             state.revealed = false;
             const q = state.selectedQuestions[state.currentIndex];
             if (q) {
-                state.currentOptions = [...q.options].sort(() => 0.5 - Math.random());
+                state.currentOptions = [...q.options].sort(() => Math.random() - 0.5);
                 if (state.settings.useTimer) {
-                    clearInterval(state.timerId);
-                    state.timeLeft = state.settings.timerSeconds;
-                    state.timerId = setInterval(() => {
-                        state.timeLeft--;
-                        const display = document.getElementById('timerDisplay');
-                        if (display) display.innerText = state.timeLeft;
-                        if (state.timeLeft <= 0) handleSelect(null, true);
-                    }, 1000);
+                    resetTimer();
+                    startTimer();
                 }
             }
+        }
+
+        function resetTimer() {
+            clearInterval(state.timerId);
+            state.timeLeft = state.settings.timerSeconds;
+        }
+
+        function startTimer() {
+            state.timerId = setInterval(() => {
+                state.timeLeft--;
+                const display = document.getElementById('timerDisplay');
+                if (display) display.innerText = state.timeLeft;
+                if (state.timeLeft <= 0) {
+                    clearInterval(state.timerId);
+                    handleSelect(null, true);
+                }
+            }, 1000);
         }
 
         window.revealAnswer = () => {
             if (state.feedback || state.revealed) return;
             state.revealed = true;
-            playSfx('click');
+            audioSystem.play('click', state.settings.volume);
             render();
         };
 
@@ -353,19 +396,21 @@
             const q = state.selectedQuestions[state.currentIndex];
             const isCorrect = opt === q.correctAnswer;
             
-            if (isTimeout) playSfx('timeout');
-            else if (isCorrect) { state.score++; playSfx('correct'); }
-            else playSfx('wrong');
+            if (isTimeout) audioSystem.play('timeout', state.settings.volume);
+            else if (isCorrect) { 
+                state.score++; 
+                audioSystem.play('correct', state.settings.volume); 
+            } else {
+                audioSystem.play('wrong', state.settings.volume);
+            }
 
             state.feedback = { isCorrect, selected: opt, timedOut: isTimeout };
-            state.lastResult = `${state.score} / ${state.selectedQuestions.length}`;
-            localStorage.setItem('last_result_summary', state.lastResult);
             saveProgress();
             render();
         };
 
         window.nextStep = () => {
-            playSfx('click');
+            audioSystem.play('click', state.settings.volume);
             if (state.currentIndex + 1 < state.selectedQuestions.length) {
                 state.currentIndex++;
                 state.feedback = null;
@@ -403,6 +448,7 @@
         window.resumeProgress = () => {
             const saved = JSON.parse(localStorage.getItem('saved_progress'));
             if (saved) {
+                audioSystem.init();
                 Object.assign(state, saved);
                 state.quizStarted = true;
                 state.feedback = null;
@@ -413,23 +459,26 @@
 
         window.toggleSettings = () => {
             const modal = document.getElementById('settingsModal');
-            modal.classList.toggle('active');
-            if (modal.classList.contains('active')) {
+            const isActive = modal.classList.toggle('active');
+            if (isActive) {
                 document.getElementById('timerToggle').checked = state.settings.useTimer;
                 document.getElementById('revealToggle').checked = state.settings.enableReveal;
                 document.getElementById('timerValue').value = state.settings.timerSeconds;
                 document.getElementById('soundToggle').checked = state.settings.soundEnabled;
                 document.getElementById('volumeControl').value = state.settings.volume;
                 document.getElementById('timerInputArea').classList.toggle('hidden', !state.settings.useTimer);
+                lucide.createIcons();
             }
         };
 
         window.updateSettings = () => {
-            state.settings.useTimer = document.getElementById('timerToggle').checked;
-            state.settings.enableReveal = document.getElementById('revealToggle').checked;
-            state.settings.timerSeconds = parseInt(document.getElementById('timerValue').value) || 15;
-            state.settings.soundEnabled = document.getElementById('soundToggle').checked;
-            state.settings.volume = parseFloat(document.getElementById('volumeControl').value);
+            state.settings = {
+                useTimer: document.getElementById('timerToggle').checked,
+                enableReveal: document.getElementById('revealToggle').checked,
+                timerSeconds: parseInt(document.getElementById('timerValue').value) || 15,
+                soundEnabled: document.getElementById('soundToggle').checked,
+                volume: parseFloat(document.getElementById('volumeControl').value)
+            };
             document.getElementById('timerInputArea').classList.toggle('hidden', !state.settings.useTimer);
             localStorage.setItem('settings', JSON.stringify(state.settings));
         };
@@ -439,16 +488,15 @@
             const title = document.getElementById('alertTitle');
             const msg = document.getElementById('alertMessage');
             const actions = document.getElementById('alertActions');
-            
-            actions.innerHTML = '<button onclick="closeAlert()" class="flex-1 bg-white/10 py-3 rounded-2xl font-bold text-sm">إلغاء</button>';
+            actions.innerHTML = '<button onclick="closeAlert()" class="flex-1 bg-white/5 py-3 rounded-xl font-bold text-xs">إلغاء</button>';
             
             if (type === 'nameRequired') {
                 title.innerText = "هوية مجهولة";
-                msg.innerText = "يرجى كتابة اسمك لنتمكن من عرض إحصائياتك في اللوحة الرئيسية.";
+                msg.innerText = "يرجى كتابة اسمك لنتمكن من حفظ نتائجك.";
             } else if (type === 'confirmation') {
-                title.innerText = "إعادة ضبط المصنع";
-                msg.innerText = "هل أنت متأكد؟ سيتم حذف جميع النتائج والإحصائيات والاسم المسجل نهائياً.";
-                actions.innerHTML += `<button onclick="localStorage.clear(); location.reload();" class="flex-1 bg-red-600 py-3 rounded-2xl font-bold text-sm">تأكيد الحذف</button>`;
+                title.innerText = "إعادة الضبط";
+                msg.innerText = "هل أنت متأكد من حذف كافة البيانات نهائياً؟";
+                actions.innerHTML += `<button onclick="localStorage.clear(); location.reload();" class="flex-1 bg-red-600 py-3 rounded-xl font-bold text-xs">تأكيد</button>`;
             }
             modal.classList.add('active');
         };
@@ -457,7 +505,7 @@
         function render() {
             const root = document.getElementById('app');
             if (state.isLoading) {
-                root.innerHTML = `<div class="glass-panel p-16 flex flex-col items-center animate-up"><div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-6"></div><p class="font-bold text-indigo-300">جاري تحميل الأسئلة...</p></div>`;
+                root.innerHTML = `<div class="glass-panel p-16 flex flex-col items-center animate-up"><div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div><p class="font-bold text-indigo-300 text-sm">جاري التجهيز...</p></div>`;
                 return;
             }
 
@@ -467,60 +515,61 @@
                     <div class="glass-panel overflow-hidden animate-up">
                         <div class="nav-bar">
                             <div class="text-right">
-                                <h1 class="text-lg font-black tracking-tight flex items-center gap-2">
-                                    <i data-lucide="brain-circuit" class="w-5 h-5 text-indigo-400"></i>
+                                <h1 class="text-base font-black tracking-tight flex items-center gap-2">
+                                    <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
                                     موسوعة الاختبارات
                                 </h1>
-                                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">المحترف الذكي v3.1</p>
+                                <p class="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">الإصدار الجمالي المطور</p>
                             </div>
-                            <button onclick="toggleSettings()" class="bg-white/5 p-3 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                                <i data-lucide="sliders" class="w-5 h-5 text-indigo-300"></i>
+                            <button onclick="toggleSettings()" class="bg-white/5 p-2.5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+                                <i data-lucide="settings" class="w-4 h-4 text-indigo-300"></i>
                             </button>
                         </div>
                         
-                        <div class="p-8 space-y-6">
+                        <div class="p-6 space-y-6">
                             <div class="grid grid-cols-2 gap-3">
-                                <div class="stat-badge text-center">
-                                    <div class="flex items-center justify-center gap-1 mb-1">
-                                        <i data-lucide="trophy" class="w-3 h-3 text-indigo-400"></i>
-                                        <span class="text-[8px] text-slate-500 uppercase font-black">أعلى نتيجة</span>
-                                    </div>
+                                <div class="stat-badge text-center py-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <div class="flex justify-center mb-1"><i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i></div>
+                                    <span class="text-[8px] text-slate-500 uppercase font-black block">أعلى نتيجة</span>
                                     <p class="text-white font-black text-xl">${state.highScore}</p>
                                 </div>
-                                <div class="stat-badge text-center">
-                                    <div class="flex items-center justify-center gap-1 mb-1">
-                                        <i data-lucide="bar-chart-3" class="w-3 h-3 text-emerald-400"></i>
-                                        <span class="text-[8px] text-slate-500 uppercase font-black">آخر نتيجة</span>
-                                    </div>
+                                <div class="stat-badge text-center py-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <div class="flex justify-center mb-1"><i data-lucide="history" class="w-4 h-4 text-emerald-500"></i></div>
+                                    <span class="text-[8px] text-slate-500 uppercase font-black block">آخر نتيجة</span>
                                     <p class="text-emerald-400 font-black text-xl">${state.lastResult}</p>
                                 </div>
                             </div>
 
                             ${saved ? `
                             <div class="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-center justify-between">
-                                <div class="text-right">
-                                    <p class="text-[10px] font-bold text-indigo-300">استكمال الاختبار؟</p>
-                                    <p class="text-[11px] text-white font-bold opacity-70">${state.lastResult}</p>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-indigo-500/20 rounded-full flex items-center justify-center">
+                                        <i data-lucide="play-circle" class="w-4 h-4 text-indigo-400"></i>
+                                    </div>
+                                    <p class="text-[10px] font-bold text-indigo-200">إكمال الجولة السابقة</p>
                                 </div>
-                                <button onclick="resumeProgress()" class="bg-indigo-600 px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg hover:bg-indigo-500 transition-colors">استئناف اللعب</button>
+                                <button onclick="resumeProgress()" class="bg-indigo-600 px-5 py-2.5 rounded-xl text-[10px] font-black hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20">متابعة</button>
                             </div>
                             ` : ''}
 
                             <div class="space-y-4 text-right">
-                                <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                                    <label class="block text-[10px] font-bold text-slate-500 mb-2 uppercase">اسم المتسابق</label>
-                                    <div class="relative">
-                                        <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                                        <input type="text" value="${state.playerName}" oninput="state.playerName=this.value; localStorage.setItem('player_name', this.value)" placeholder="أدخل اسمك هنا..." class="w-full bg-black/20 border border-white/10 px-6 py-4 rounded-xl outline-none font-bold text-sm focus:border-indigo-500/50">
+                                <div class="bg-white/5 p-4 rounded-2xl border border-white/5 focus-within:border-indigo-500/50 transition-colors">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-500"></i>
+                                        <label class="text-[9px] font-bold text-slate-500 uppercase">اسم المتسابق</label>
                                     </div>
+                                    <input type="text" value="${state.playerName}" oninput="state.playerName=this.value; localStorage.setItem('player_name', this.value)" placeholder="أدخل اسمك هنا..." class="w-full bg-transparent border-none outline-none font-bold text-sm placeholder:text-slate-600">
                                 </div>
                                 
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-2 gap-3">
                                     <div class="col-span-2 bg-white/5 p-4 rounded-2xl border border-white/5">
-                                        <div class="flex justify-between items-center mb-2">
-                                            <label class="text-[10px] font-bold text-slate-500 uppercase">مجال الأسئلة</label>
-                                            <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md">
-                                                المتوفر: ${state.questions.length} سؤال
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-slate-500"></i>
+                                                <label class="text-[9px] font-bold text-slate-500 uppercase">اختر التصنيف</label>
+                                            </div>
+                                            <span class="text-[8px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-bold">
+                                                متوفر: ${state.questions.length} سؤالاً
                                             </span>
                                         </div>
                                         <select onchange="fetchQuestions(this.value)" class="w-full bg-transparent font-bold text-sm outline-none cursor-pointer">
@@ -528,11 +577,15 @@
                                         </select>
                                     </div>
                                     <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                                        <label class="block text-[10px] font-bold text-slate-500 mb-2 uppercase">العدد</label>
+                                        <div class="flex items-center justify-center gap-2 mb-2">
+                                            <i data-lucide="list-ordered" class="w-3.5 h-3.5 text-slate-500"></i>
+                                            <label class="text-[9px] font-bold text-slate-500 uppercase">الأسئلة</label>
+                                        </div>
                                         <input type="number" id="numInput" value="10" max="${state.questions.length}" min="1" class="w-full bg-transparent font-black text-center text-lg focus:outline-none">
                                     </div>
-                                    <button onclick="startQuiz()" class="btn-primary rounded-2xl font-black text-white text-lg hover:scale-[1.02] active:scale-[0.98]">
-                                        انطلاق
+                                    <button onclick="startQuiz()" class="btn-primary rounded-2xl font-black text-white text-base flex flex-col items-center justify-center gap-1 group">
+                                        <span>ابدأ التحدي</span>
+                                        <i data-lucide="zap" class="w-4 h-4 group-hover:animate-pulse"></i>
                                     </button>
                                 </div>
                             </div>
@@ -543,15 +596,39 @@
             }
 
             if (state.showResult) {
+                const scorePercent = (state.score / state.selectedQuestions.length) * 100;
+                let emojiIcon = "frown";
+                let emojiColor = "text-red-400";
+                if (scorePercent >= 80) { emojiIcon = "party-popper"; emojiColor = "text-amber-400"; }
+                else if (scorePercent >= 50) { emojiIcon = "smile"; emojiColor = "text-indigo-400"; }
+
                 root.innerHTML = `
-                    <div class="glass-panel p-10 text-center animate-up">
-                        <div class="w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i data-lucide="flag" class="w-12 h-12 text-indigo-400"></i>
+                    <div class="glass-panel p-8 text-center animate-up">
+                        <div class="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-indigo-500/20">
+                            <i data-lucide="${emojiIcon}" class="w-10 h-10 ${emojiColor}"></i>
                         </div>
-                        <h2 class="text-2xl font-black mb-2">تم الانتهاء!</h2>
-                        <p class="text-slate-400 mb-10 text-sm">يا ${state.playerName}، نتيجتك النهائية هي:</p>
-                        <div class="text-7xl font-black text-indigo-400 mb-10 drop-shadow-xl">${state.lastResult}</div>
-                        <button onclick="state.quizStarted=false; render()" class="btn-primary w-full py-5 rounded-2xl font-bold text-lg">العودة للرئيسية</button>
+                        <h2 class="text-2xl font-black mb-1">انتهى الاختبار</h2>
+                        <p class="text-slate-400 mb-8 text-sm">أداء رائع يا <span class="text-white font-bold">${state.playerName}</span></p>
+                        
+                        <div class="relative inline-block mb-10">
+                            <div class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-purple-500 leading-none">${state.score}</div>
+                            <div class="text-sm font-bold text-slate-500 mt-2">من أصل ${state.selectedQuestions.length}</div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-8">
+                             <div class="p-3 bg-white/5 rounded-xl border border-white/5">
+                                <span class="text-[8px] text-slate-500 uppercase font-black block mb-1">النسبة</span>
+                                <span class="text-white font-bold text-sm">${Math.round(scorePercent)}%</span>
+                             </div>
+                             <div class="p-3 bg-white/5 rounded-xl border border-white/5">
+                                <span class="text-[8px] text-slate-500 uppercase font-black block mb-1">الرتبة</span>
+                                <span class="text-indigo-400 font-bold text-sm">${scorePercent >= 80 ? 'خبير' : 'مبتدئ'}</span>
+                             </div>
+                        </div>
+
+                        <button onclick="state.quizStarted=false; render()" class="btn-primary w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3">
+                            <i data-lucide="home" class="w-4 h-4"></i> العودة للرئيسية
+                        </button>
                     </div>`;
                 lucide.createIcons();
                 return;
@@ -561,49 +638,66 @@
             const progress = (state.currentIndex / state.selectedQuestions.length) * 100;
 
             root.innerHTML = `
-                <div class="glass-panel flex flex-col min-h-[580px] animate-up overflow-hidden">
-                    <div class="p-6 pb-2 flex justify-between items-center text-[10px] font-bold text-slate-400">
-                        <span class="bg-white/5 px-3 py-1.5 rounded-lg flex items-center gap-1">
-                             <i data-lucide="hash" class="w-3 h-3"></i> ${state.currentIndex + 1} / ${state.selectedQuestions.length}
-                        </span>
-                        ${state.settings.useTimer && !state.feedback ? `<span class="text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                             <i data-lucide="timer" class="w-3 h-3"></i> <span id="timerDisplay">${state.timeLeft}</span> ثانية</span>` : ''}
-                        <span class="text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg flex items-center gap-1">
-                             <i data-lucide="check-circle-2" class="w-3 h-3"></i> ${state.score}
-                        </span>
+                <div class="glass-panel flex flex-col min-h-[550px] animate-up overflow-hidden">
+                    <div class="p-4 pb-2 flex justify-between items-center text-[10px] font-black tracking-tight">
+                        <div class="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                            <i data-lucide="layers" class="w-3 h-3 text-indigo-400"></i>
+                            <span class="text-slate-300">سؤال ${state.currentIndex + 1} / ${state.selectedQuestions.length}</span>
+                        </div>
+                        
+                        ${state.settings.useTimer && !state.feedback ? `
+                        <div class="flex items-center gap-2 bg-indigo-500/10 px-3 py-1.5 rounded-xl border border-indigo-500/20 text-indigo-400">
+                             <i data-lucide="timer" class="w-3.5 h-3.5"></i>
+                             <span id="timerDisplay" class="tabular-nums">${state.timeLeft}</span>
+                        </div>` : ''}
+                        
+                        <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 text-emerald-400">
+                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                            <span>${state.score}</span>
+                        </div>
                     </div>
                     
-                    <div class="px-6 mt-4">
+                    <div class="px-5 mt-3">
                         <div class="progress-track"><div class="progress-thumb" style="width: ${progress}%"></div></div>
                     </div>
 
-                    <div class="p-8 flex-1">
-                        <h2 class="text-xl font-bold text-right leading-relaxed mb-10 min-h-[60px]">${q.question}</h2>
+                    <div class="p-8 flex-1 flex flex-col justify-center">
+                        <div class="flex items-start gap-3 mb-8">
+                            <i data-lucide="help-circle" class="w-6 h-6 text-indigo-500 shrink-0 mt-1"></i>
+                            <h2 class="text-xl font-bold text-right leading-relaxed">${q.question}</h2>
+                        </div>
+                        
                         <div class="grid gap-3">
                             ${state.currentOptions.map(opt => {
-                                let cls = 'hover:bg-white/10';
+                                let cls = '';
+                                let icon = 'circle';
                                 if (state.feedback) {
-                                    if (opt === q.correctAnswer) cls = 'correct';
-                                    else if (opt === state.feedback.selected) cls = 'incorrect';
-                                    else cls = 'opacity-20';
+                                    if (opt === q.correctAnswer) { cls = 'correct'; icon = 'check-circle'; }
+                                    else if (opt === state.feedback.selected) { cls = 'incorrect'; icon = 'x-circle'; }
+                                    else { cls = 'opacity-30 scale-95'; icon = 'circle'; }
                                 } else if (state.revealed && opt === q.correctAnswer) {
-                                    cls = 'border-emerald-500 bg-emerald-500/20 text-emerald-300';
+                                    cls = 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 ring-2 ring-emerald-500/20';
+                                    icon = 'eye';
                                 }
-                                return `<button onclick="handleSelect('${opt.replace(/'/g, "\\'")}')" ${state.feedback ? 'disabled' : ''} class="option-card w-full p-5 rounded-2xl text-right text-sm font-bold ${cls}">${opt}</button>`;
+                                return `
+                                <button onclick="handleSelect('${opt.replace(/'/g, "\\'")}')" ${state.feedback ? 'disabled' : ''} class="option-card w-full p-4 rounded-2xl text-right text-xs font-bold transition-all ${cls}">
+                                    <i data-lucide="${icon}" class="w-4 h-4 shrink-0"></i>
+                                    <span class="flex-1">${opt}</span>
+                                </button>`;
                             }).join('')}
                         </div>
                     </div>
 
                     <div class="p-6 pt-0 space-y-3">
                         ${state.settings.enableReveal && !state.feedback && !state.revealed ? `
-                        <button onclick="revealAnswer()" class="w-full py-4 border border-emerald-500/30 bg-emerald-500/5 text-emerald-400 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-emerald-500/10 transition-colors">
+                        <button onclick="revealAnswer()" class="w-full py-3.5 border border-emerald-500/30 bg-emerald-500/5 text-emerald-400 rounded-2xl font-black text-[10px] flex items-center justify-center gap-3 hover:bg-emerald-500/10 transition-colors">
                             <i data-lucide="eye" class="w-4 h-4"></i> كشف الإجابة الصحيحة
                         </button>` : ''}
                         
                         ${state.feedback ? `
-                        <button onclick="nextStep()" class="btn-primary w-full py-5 rounded-2xl font-bold shadow-xl flex items-center justify-center gap-2">
-                            ${state.currentIndex + 1 === state.selectedQuestions.length ? 'رؤية النتائج' : 'السؤال التالي'}
-                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        <button onclick="nextStep()" class="btn-primary w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 group">
+                            <span>${state.currentIndex + 1 === state.selectedQuestions.length ? 'عرض النتائج النهائية' : 'السؤال التالي'}</span>
+                            <i data-lucide="chevron-left" class="w-5 h-5 group-hover:-translate-x-1 transition-transform"></i>
                         </button>` : ''}
                     </div>
                 </div>`;
